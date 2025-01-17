@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Models\Announcement;
 use App\Models\User;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 class AnnouncementControllerTest extends TestCase
 {
@@ -135,9 +136,15 @@ class AnnouncementControllerTest extends TestCase
 
         $response = $this->getJson('/api/announcements/active');
 
-        $response->assertStatus(200)
-            ->assertJson(fn ($json) =>
-                $json[0]['start_date'] > $json[1]['start_date']
-            );
+        $response->assertStatus(200);
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has(2)
+                ->whereType('0.start_date', 'string')
+                ->whereType('1.start_date', 'string')
+                ->where('0.start_date', function ($startDate) use ($json) {
+                    return $startDate > $json->toArray()[1]['start_date'];
+                })
+        );
     }
+
 }
